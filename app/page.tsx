@@ -1,69 +1,86 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { usePrivy } from "@privy-io/react-auth";
+import Wallet from "./components/Wallet";
 
 export default function Home() {
+  const { ready, authenticated, user, login, logout } = usePrivy();
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleLogout() {
+    setError("");
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch {
+      setError("Não foi possível sair. Tente novamente.");
+    } finally {
+      setLoggingOut(false);
+    }
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-screen flex-col bg-zinc-50 font-sans text-zinc-900">
+      <header className="flex items-center justify-between gap-4 border-b border-zinc-200 bg-white px-5 py-5 sm:px-8">
+        <span className="font-semibold">Minha Carteira</span>
+        {ready && authenticated && (
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="rounded-xl border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-100 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600 disabled:cursor-wait disabled:opacity-50"
+          >
+            {loggingOut ? "Saindo..." : "Sair"}
+          </button>
+        )}
+      </header>
+
+      <main className="flex flex-1 items-center justify-center p-5 sm:p-8">
+        <section className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm sm:p-8">
+          <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+            Sepolia · Rede de teste
+          </span>
+
+          {!ready ? (
+            <p role="status" className="mt-6 text-zinc-600">
+              Carregando autenticação...
+            </p>
+          ) : authenticated ? (
+            <>
+              <h1 className="mt-6 text-2xl font-semibold tracking-tight">Minha carteira</h1>
+              <p className="mt-3 break-all text-zinc-600">
+                {user?.email?.address ?? "Login realizado com sucesso."}
+              </p>
+              <Wallet key={user?.id} />
+              <p className="mt-5 text-sm leading-6 text-zinc-500">
+                Use Sair no cabeçalho para entrar com outra conta.
+              </p>
+            </>
+          ) : (
+            <>
+              <h1 className="mt-6 text-3xl font-semibold tracking-tight">Sua carteira Web3</h1>
+              <p className="mt-3 leading-7 text-zinc-600">
+                Entre com seu e-mail para acessar sua carteira Ethereum na rede de teste Sepolia.
+              </p>
+              <button
+                type="button"
+                onClick={() => login()}
+                className="mt-7 w-full rounded-xl bg-indigo-600 px-5 py-3 font-medium text-white hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo-600"
+              >
+                Entrar com e-mail
+              </button>
+            </>
+          )}
+
+          {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
+          <p className="mt-7 border-t border-zinc-100 pt-4 text-xs leading-5 text-zinc-500">
+            O ETH da Sepolia é usado apenas para testes e não tem valor real.
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </section>
       </main>
     </div>
   );
 }
+
